@@ -321,6 +321,9 @@ select.form-input{cursor:pointer}
     <button class="role-btn active" onclick="switchRole('buyer')" id="role-buyer">
       <span class="role-dot" style="background:#5B8FE8"></span> Customer
     </button>
+    <button class="role-btn" onclick="switchRole('biz')" id="role-biz">
+      <span class="role-dot" style="background:#0A7A7A"></span> 🗺️ Biz Channels
+    </button>
   </div>
 
   <div id="nav-container"></div>
@@ -482,6 +485,7 @@ const ROLES = {
   seller: { label:'Dairy Owner',   color:'#E8A020', bg:'#FFF3DC', init:'MS', name:'Mahesh Sharma' },
   agent:  { label:'Delivery Agent',color:'#3AAA74', bg:'#E8F5EE', init:'RD', name:'Ravi Deshpande' },
   buyer:  { label:'Customer',      color:'#5B8FE8', bg:'#EBF0FA', init:'RK', name:'Raj Kumar' },
+  biz:    { label:'Biz Channels',  color:'#0A7A7A', bg:'#E3F5F5', init:'BC', name:'Business Hub' },
 };
 
 const NAV = {
@@ -528,6 +532,29 @@ const NAV = {
     {id:'social-milk',icon:'🤝',label:'Social Milk'},
     {id:'refer',icon:'🎁',label:'Refer & Earn'},
     {id:'chat-buyer',icon:'💬',label:'Chat with Dairy',badge:2},
+  ],
+  biz:[
+    {id:'biz-overview',icon:'🗺️',label:'Channel Map'},
+    {id:'biz-uc1',icon:'🧑‍🌾',label:'UC1 · Solo Milkman'},
+    {id:'biz-uc2',icon:'👷',label:'UC2 · Owner + Agents'},
+    {id:'biz-uc3',icon:'🏢',label:'UC3 · Bulk to Co-ops'},
+    {id:'biz-uc4',icon:'🔀',label:'UC4 · Co-op + Home'},
+    {id:'biz-uc5',icon:'🏭',label:'UC5 · Co-op → Milkmen'},
+    {id:'biz-uc6',icon:'🏷️',label:'UC6 · Co-op → Brands'},
+    {id:'biz-uc7',icon:'📍',label:'UC7 · Collection Centres'},
+    {id:'biz-uc8',icon:'⚡',label:'UC8 · On-Demand'},
+    {id:'biz-uc9',icon:'🚀',label:'UC9 · 10-Min Milk'},
+    {id:'biz-uc10',icon:'☕',label:'UC10 · 10-Min Tea'},
+    {id:'biz-uc11',icon:'🍳',label:'UC11 · Tea+Breakfast'},
+    {id:'biz-uc12',icon:'📦',label:'UC12 · Bulk+Extra'},
+    {id:'biz-uc13',icon:'💚',label:'UC13 · Social / Wastage'},
+    {id:'biz-uc14',icon:'📡',label:'UC14 · IoT Milk Purity'},
+    {id:'biz-uc15',icon:'🐄',label:'UC15 · Cattle Mgmt'},
+    {id:'biz-uc16',icon:'🐮',label:'UC16 · Rent-a-Cow'},
+    {id:'biz-uc17',icon:'🎫',label:'UC17 · Farm Visit'},
+    {id:'biz-uc18',icon:'🙏',label:'UC18 · Gaupuja'},
+    {id:'biz-uc19',icon:'🌿',label:'UC19 · Gaumutra/Gauri'},
+    {id:'biz-uc20',icon:'📚',label:'UC20 · Wikicow'},
   ],
 };
 
@@ -2547,6 +2574,453 @@ PAGES['chat-seller'] = ()=>{
     </div>
   </div>
 </div>`;};
+
+// ════════════════════════════════════════════════════════════
+// BUSINESS CHANNELS — 20 USE CASES
+// ════════════════════════════════════════════════════════════
+
+// helper to build a standard UC page card
+function ucHeader(num, icon, title, tagline, tags) {
+  return '<div class="page-header">'
+    + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+    + '<div style="width:48px;height:48px;border-radius:14px;background:var(--teal-bg);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">' + icon + '</div>'
+    + '<div>'
+    + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+    + '<h1 style="margin:0">Use Case ' + num + ' — ' + title + '</h1>'
+    + tags.map(function(t){ return '<span class="badge badge-teal" style="font-size:10px">' + t + '</span>'; }).join('')
+    + '</div>'
+    + '<p style="margin-top:4px">' + tagline + '</p>'
+    + '</div>'
+    + '</div>'
+    + '</div>';
+}
+
+function ucFlowRow(steps) {
+  return '<div class="card" style="margin-bottom:16px">'
+    + '<div class="card-header"><div class="card-title">Transaction Flow</div></div>'
+    + '<div style="display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:4px">'
+    + steps.map(function(s, i) {
+        return '<div style="display:flex;flex-direction:column;align-items:center;min-width:100px">'
+          + '<div style="width:44px;height:44px;border-radius:50%;background:var(--teal-bg);border:2px solid var(--teal);display:flex;align-items:center;justify-content:center;font-size:20px">' + s[0] + '</div>'
+          + '<div style="font-size:10px;font-weight:600;color:var(--text);margin-top:5px;text-align:center;max-width:90px">' + s[1] + '</div>'
+          + (s[2] ? '<div style="font-size:9px;color:var(--text3);text-align:center;max-width:90px">' + s[2] + '</div>' : '')
+          + '</div>'
+          + (i < steps.length - 1 ? '<div style="flex:1;min-width:20px;height:2px;background:var(--teal-bg);margin-top:-18px;border-top:2px dashed var(--teal-bg)"></div><div style="font-size:14px;color:var(--teal);flex-shrink:0;margin-top:-18px">→</div><div style="flex:1;min-width:20px;height:2px;margin-top:-18px"></div>' : '');
+      }).join('')
+    + '</div></div>';
+}
+
+function ucApiTable(apis) {
+  return '<div class="card" style="margin-bottom:16px">'
+    + '<div class="card-header"><div class="card-title">Key APIs</div><span class="badge badge-blue">Spring Boot REST</span></div>'
+    + '<div class="table-wrap"><table>'
+    + '<thead><tr><th>Method</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr></thead>'
+    + '<tbody>'
+    + apis.map(function(a) {
+        var mc = a[0]==='GET'?'badge-blue':a[0]==='POST'?'badge-green':a[0]==='PUT'?'badge-amber':'badge-red';
+        return '<tr><td><span class="badge ' + mc + '">' + a[0] + '</span></td>'
+          + '<td><code style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--text)">' + a[1] + '</code></td>'
+          + '<td class="text-muted" style="font-size:12px">' + a[2] + '</td>'
+          + '<td><span class="badge badge-gray" style="font-size:10px">' + a[3] + '</span></td></tr>';
+      }).join('')
+    + '</tbody></table></div></div>';
+}
+
+function ucKpiCards(kpis) {
+  return '<div class="stat-grid" style="grid-template-columns:repeat(' + Math.min(kpis.length,4) + ',1fr);margin-bottom:16px">'
+    + kpis.map(function(k) {
+        return '<div class="stat-card"><div class="stat-icon">' + k[0] + '</div>'
+          + '<div class="stat-label">' + k[1] + '</div>'
+          + '<div class="stat-val" style="color:' + k[3] + '">' + k[2] + '</div>'
+          + (k[4] ? '<div class="stat-sub">' + k[4] + '</div>' : '')
+          + '</div>';
+      }).join('')
+    + '</div>';
+}
+
+function ucFeatureGrid(features) {
+  return '<div class="grid-2" style="margin-bottom:16px">'
+    + features.map(function(f) {
+        return '<div class="card"><div class="card-header"><div class="card-title">' + f[0] + '</div></div>'
+          + '<ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:7px">'
+          + f[1].map(function(item){ return '<li style="display:flex;align-items:flex-start;gap:8px;font-size:13px"><span style="color:var(--teal);flex-shrink:0">✦</span><span>' + item + '</span></li>'; }).join('')
+          + '</ul></div>';
+      }).join('')
+    + '</div>';
+}
+
+function ucSchemaBlock(tables) {
+  return '<div class="card" style="margin-bottom:16px">'
+    + '<div class="card-header"><div class="card-title">DB Schema Additions</div><span class="badge badge-purple">PostgreSQL</span></div>'
+    + '<div style="display:flex;gap:12px;flex-wrap:wrap">'
+    + tables.map(function(t) {
+        return '<div style="background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;min-width:180px">'
+          + '<div style="font-size:11px;font-weight:700;color:var(--teal);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">' + t[0] + '</div>'
+          + t[1].map(function(col){ return '<div style="font-size:11px;color:var(--text2);padding:2px 0;border-bottom:1px solid var(--border)">' + col + '</div>'; }).join('')
+          + '</div>';
+      }).join('')
+    + '</div></div>';
+}
+
+// ─── BIZ OVERVIEW MAP ──────────────────────────────────────
+PAGES['biz-overview'] = function() {
+  return ucHeader('', '🗺️', 'Business Channel Map', 'All 20 real-world milk distribution & service use cases on this platform', ['20 Use Cases','Multi-Tenant','SaaS'])
+    + '<div class="alert alert-info" style="margin-bottom:16px">Each channel is a separately configurable business model within the same multi-tenant platform. Sellers can operate across multiple channels simultaneously.</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'
+    + [
+        ['🧑‍🌾','UC1','Solo Milkman → Home/Hotels','biz-uc1','badge-teal'],
+        ['👷','UC2','Owner + Hired Agents','biz-uc2','badge-teal'],
+        ['🏢','UC3','Bulk → Co-ops (B2B)','biz-uc3','badge-blue'],
+        ['🔀','UC4','Co-op + Home Both','biz-uc4','badge-blue'],
+        ['🏭','UC5','Co-op → Milkmen → Retail','biz-uc5','badge-amber'],
+        ['🏷️','UC6','Co-op → Brands (Amul, Katraj)','biz-uc6','badge-amber'],
+        ['📍','UC7','Milkmen → Collection Centres','biz-uc7','badge-purple'],
+        ['⚡','UC8','On-Demand Local/Brand','biz-uc8','badge-purple'],
+        ['🚀','UC9','10-Min Milk Delivery','biz-uc9','badge-red'],
+        ['☕','UC10','10-Min Tea Delivery','biz-uc10','badge-red'],
+        ['🍳','UC11','Tea + Breakfast Box','biz-uc11','badge-red'],
+        ['📦','UC12','Bulk + Extra on Demand','biz-uc12','badge-green'],
+        ['💚','UC13','Social Wastage Milk','biz-uc13','badge-green'],
+        ['📡','UC14','IoT Milk Purity Monitor','biz-uc14','badge-gray'],
+        ['🐄','UC15','Cattle Management','biz-uc15','badge-gray'],
+        ['🐮','UC16','Rent-a-Cow (Gir)','biz-uc16','badge-amber'],
+        ['🎫','UC17','Dairy Farm Visit Ticket','biz-uc17','badge-teal'],
+        ['🙏','UC18','Gaupuja 1-hr Booking','biz-uc18','badge-purple'],
+        ['🌿','UC19','Gaumutra/Gauri Products','biz-uc19','badge-green'],
+        ['📚','UC20','Wikicow — Breed Database','biz-uc20','badge-blue'],
+      ].map(function(uc) {
+        return '<div class="stat-card" onclick="navigateTo(\'' + uc[3] + '\',\'' + uc[2] + '\')" style="cursor:pointer;padding:14px">'
+          + '<div style="font-size:24px;margin-bottom:6px">' + uc[0] + '</div>'
+          + '<div style="font-size:10px;font-weight:700;color:var(--teal);margin-bottom:3px">' + uc[1] + '</div>'
+          + '<div style="font-size:12px;font-weight:500;color:var(--text);line-height:1.3">' + uc[2] + '</div>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+    + '<div class="grid-2">'
+    + '<div class="card"><div class="card-header"><div class="card-title">Revenue Channels Split (Projected)</div></div>'
+    + '<div class="chart-bar-wrap">'
+    + [['Subscription Milk (UC1-5)','48%',48,'var(--teal)'],['Instant/On-Demand (UC8-12)','22%',22,'var(--red)'],['Agri & Cattle (UC14-16)','12%',12,'var(--amber)'],['Experiences (UC17-19)','8%',8,'var(--purple)'],['Marketplace & Wiki (UC6,20)','10%',10,'var(--blue)']].map(function(r){
+        return '<div class="chart-bar-item"><div class="chart-bar-label" style="width:170px;font-size:11px">' + r[0] + '</div>'
+          + '<div class="chart-bar-track"><div class="chart-bar-fill" data-w="' + r[2] + '%" style="background:' + r[3] + ';width:0%"></div></div>'
+          + '<div class="chart-bar-val">' + r[1] + '</div></div>';
+      }).join('')
+    + '</div></div>'
+    + '<div class="card"><div class="card-header"><div class="card-title">Implementation Complexity</div></div>'
+    + '<div class="table-wrap"><table><thead><tr><th>Use Cases</th><th>Type</th><th>Priority</th><th>Complexity</th></tr></thead><tbody>'
+    + [['UC1–5','Core Milk Distribution','P0 — Must have','⭐⭐'],['UC8–12','Instant Delivery','P1 — High','⭐⭐⭐'],['UC13','Social/CSR','P2 — Medium','⭐'],['UC14','IoT','P1 — High','⭐⭐⭐⭐'],['UC15–16','Cattle/Agri','P2 — Medium','⭐⭐⭐'],['UC17–19','Experience/Commerce','P3 — Nice to have','⭐⭐'],['UC20','Knowledge Base','P3 — Nice to have','⭐']].map(function(r){
+        return '<tr><td class="td-bold" style="color:var(--teal)">' + r[0] + '</td><td class="text-muted" style="font-size:11px">' + r[1] + '</td>'
+          + '<td><span class="badge ' + (r[2].startsWith('P0')?'badge-red':r[2].startsWith('P1')?'badge-amber':r[2].startsWith('P2')?'badge-blue':'badge-gray') + '" style="font-size:10px">' + r[2].split(' — ')[0] + '</span></td>'
+          + '<td>' + r[3] + '</td></tr>';
+      }).join('')
+    + '</tbody></table></div></div>'
+    + '</div>';
+};
+
+// ─── UC1 · Solo Milkman ────────────────────────────────────
+PAGES['biz-uc1'] = function() {
+  return ucHeader(1,'🧑‍🌾','Solo Milkman','Milkman is both owner and delivery agent — delivers to homes, hotels & tea shops himself', ['Self-Operated','B2C','B2B-Micro'])
+    + ucKpiCards([['🥛','Daily Volume','80–150L','var(--teal)','Solo capacity'],['🏠','Customer Types','Home / Hotel / Tea Shop','var(--blue)','Mix'],['💰','Collection Mode','Cash + UPI both','var(--amber)','Daily/Monthly'],['⏱️','Delivery Window','4:30–8:30 AM','var(--green)','Morning slot']])
+    + ucFlowRow([['🐄','Milkman collects from own cow/farm','Dawn 3–4 AM'],['📱','System generates day\'s delivery list','Auto 4:30 AM'],['🗺️','Route optimized, milkman starts','4:30 AM'],['🏠','Delivers to each stop','Per schedule'],['✅','Taps \'Delivered\' on app','Real-time'],['💰','Collects cash / records UPI','Per stop'],['📊','Day summary auto-posted','EOD auto']])
+    + ucFeatureGrid([
+        ['Home Customers', ['Subscribe 0.5L–3L daily or alternate days','Morning / Evening slot preference','Skip delivery (holiday/travel)','Monthly bill auto-generated','WhatsApp delivery confirmation']],
+        ['Hotels & Tea Shops (B2B)', ['Bulk orders 10L–100L daily','Invoice-based billing (GST)','Credit period configurable (7/15/30 days)','Multiple milk types in one order','Dedicated B2B rate card']],
+        ['Milkman App Features', ['Single-owner login (no team)','Day\'s route auto-optimized','Tap-to-deliver on each stop','Cash ledger (collected vs expected)','Missed delivery auto-alert to customer']],
+        ['Settlement & Finance', ['Auto monthly bill for each customer','Cash vs digital payment reconciliation','Profit/loss daily summary','Outstanding dues dashboard','Income tax friendly export (CSV)']],
+      ])
+    + ucApiTable([['POST','/api/v1/deliveries/solo/mark-delivered','Mark single stop delivered','Agent JWT'],['GET','/api/v1/route/optimize?agentId={id}','TSP-optimized daily route','Agent JWT'],['POST','/api/v1/billing/generate/{customerId}','Generate monthly bill','Seller JWT'],['GET','/api/v1/milkman/{id}/cash-summary','Daily cash vs expected','Seller JWT']])
+    + ucSchemaBlock([['milkman_owner',['id UUID PK','name VARCHAR','phone VARCHAR','license_no VARCHAR','operates_solo BOOLEAN','capacity_litres DECIMAL']],['solo_delivery_log',['id UUID PK','milkman_id UUID FK','customer_id UUID FK','delivered_at TIMESTAMP','qty_delivered DECIMAL','payment_mode ENUM','amount_collected DECIMAL']],['b2b_account',['id UUID PK','business_name VARCHAR','type ENUM(hotel,teashop,bakery)','gstin VARCHAR','credit_days INT','rate_card_id UUID FK']]]);
+};
+
+// ─── UC2 · Owner + Hired Agents ────────────────────────────
+PAGES['biz-uc2'] = function() {
+  return ucHeader(2,'👷','Owner + Hired Delivery Agents','Dairy owner manages operations; hired milkmen execute deliveries to homes, hotels, tea shops', ['Team Ops','Multi-Agent','Route Management'])
+    + ucKpiCards([['👷','Active Agents','2–10','var(--teal)','Per dairy size'],['📦','Deliveries/Agent','40–120/day','var(--blue)','Per route'],['🗺️','Routes','Separate per agent','var(--amber)','TSP optimized'],['📊','Tracking','Real-time GPS','var(--green)','WebSocket']])
+    + ucFlowRow([['🏪','Owner configures routes & assigns agents','Night before'],['📱','Agent receives route on app','5:00 AM auto'],['🚴','Agent does delivery round','5:00–9:00 AM'],['✅','Each stop tapped delivered/missed','Live'],['👀','Owner monitors dashboard','Real-time'],['💰','Agent deposits cash to owner','EOD'],['📑','Owner reconciles & approves','EOD']])
+    + ucFeatureGrid([
+        ['Agent Management', ['Hire/fire agents with document upload (Aadhaar)','Assign agents to specific routes','Set salary + incentive structure','Performance KPIs (completion rate, speed)','Attendance tracking (login/logout time)']],
+        ['Route Assignment Rules', ['Auto-assign by zone / pincode','Manual override by owner','Capacity limit per agent per day','Holiday cover — auto-reassign route','Missed delivery → alert owner + reassign']],
+        ['Cash & Accountability', ['Agent-level cash ledger (expected vs collected)','Photographic proof of delivery (optional)','Discrepancy flagged automatically','Daily settlement with owner','Agent wallet for incentive payouts']],
+        ['Escalation & Exceptions', ['Agent no-show → owner notified instantly','Customer complaint → tagged to agent','Missed delivery logged with reason code','Route leakage report (extra milk given)','Incentive deducted for miss > threshold']],
+      ])
+    + ucApiTable([['POST','/api/v1/agents','Register new delivery agent','Seller JWT'],['PUT','/api/v1/routes/{routeId}/assign','Assign route to agent','Seller JWT'],['GET','/api/v1/agents/{id}/live-location','Real-time agent GPS','Seller JWT'],['POST','/api/v1/cash-settlement/eod','Submit end-of-day cash','Agent JWT'],['GET','/api/v1/sellers/{id}/leakage-report','Milk leakage analytics','Seller JWT']])
+    + ucSchemaBlock([['delivery_agent',['id UUID PK','seller_id UUID FK','name VARCHAR','phone VARCHAR','aadhaar_no VARCHAR(enc)','salary DECIMAL','hire_date DATE','status ENUM']],['route',['id UUID PK','seller_id UUID FK','agent_id UUID FK','name VARCHAR','zone VARCHAR','stop_count INT','distance_km DECIMAL']],['cash_settlement',['id UUID PK','agent_id UUID FK','date DATE','expected DECIMAL','collected DECIMAL','deposited BOOLEAN','discrepancy DECIMAL']]]);
+};
+
+// ─── UC3 · Bulk to Co-ops ──────────────────────────────────
+PAGES['biz-uc3'] = function() {
+  return ucHeader(3,'🏢','Bulk Sales to Cooperative Societies','Milkman sells milk exclusively in bulk to cooperative dairies / societies on daily or scheduled basis', ['B2B Only','Bulk Orders','Schedule'])
+    + ucKpiCards([['🥛','Order Size','100L–5000L/day','var(--teal)','Per coop'],['📅','Schedule','Daily / MWF / Custom','var(--blue)','Recurring'],['🧾','Billing','GST Invoice monthly','var(--amber)','Credit 15 days'],['🏦','Payment','NEFT / Cheque / UPI','var(--green)','Bulk settlement']])
+    + ucFlowRow([['🐄','Milkman/farmer collects milk'],['📋','Quantity measured (fat tested)','FAT machine'],['🏢','Dispatched to co-op society','Tanker/cans'],['✅','Co-op acknowledges receipt','Weight slip'],['🧾','Monthly invoice raised','Automated'],['💳','Payment by NEFT/cheque','15-day cycle'],['📊','Revenue posted to ledger','Auto']])
+    + ucFeatureGrid([
+        ['Cooperative Society Profile', ['Co-op registration + GSTIN verification','Acceptance capacity (litres/day)','Preferred fat % range','Approved milk types','Credit limit & payment terms']],
+        ['Order & Scheduling', ['Standing order: daily or custom days','Quantity variance tolerance (±5%)','Holiday & maintenance skip','Seasonal capacity adjustment','Emergency order modification']],
+        ['Quality & Compliance', ['FAT/SNF reading at pickup','Chilling temperature log','FSSAI compliance documentation','Rejection log (reason + quantity)','Quality score per supplier']],
+        ['Finance & Settlement', ['Auto-invoice on agreed rate','Price linked to state govt advisory','Advance deduction for inputs','Payment reconciliation dashboard','TDS deduction tracking']],
+      ])
+    + ucApiTable([['POST','/api/v1/bulk-orders','Create bulk B2B order','Seller JWT'],['PUT','/api/v1/bulk-orders/{id}/acknowledge','Co-op acknowledges receipt','Partner JWT'],['POST','/api/v1/quality/fat-reading','Log fat/SNF reading','Device/API'],['POST','/api/v1/invoices/b2b','Generate GST invoice','Seller JWT'],['GET','/api/v1/coop/{id}/ledger','Co-op account statement','Seller JWT']])
+    + ucSchemaBlock([['cooperative_society',['id UUID PK','reg_number VARCHAR','gstin VARCHAR','capacity_litres DECIMAL','credit_days INT','preferred_fat_min DECIMAL','preferred_fat_max DECIMAL']],['bulk_order',['id UUID PK','seller_id UUID FK','buyer_coop_id UUID FK','date DATE','qty_ordered DECIMAL','qty_received DECIMAL','fat_reading DECIMAL','status ENUM']],['quality_log',['id UUID PK','order_id UUID FK','fat_pct DECIMAL','snf_pct DECIMAL','temp_celsius DECIMAL','tested_at TIMESTAMP','pass BOOLEAN']]]);
+};
+
+// ─── UC4 · Co-op + Home Customers ─────────────────────────
+PAGES['biz-uc4'] = function() {
+  return ucHeader(4,'🔀','Cooperative + Home Customer (Hybrid)','Milkman sells bulk to co-op society AND retail to home customers simultaneously — split inventory model', ['Hybrid','B2B+B2C','Inventory Split'])
+    + ucKpiCards([['⚖️','B2B Allocation','60% of production','var(--teal)','Co-op fixed'],['🏠','B2C Allocation','40% retail','var(--blue)','Home delivery'],['📊','Inventory','Real-time split view','var(--amber)','Auto-calc'],['🔔','Alert','Auto-warn if oversold','var(--red)','Prevent shortfall']])
+    + ucFlowRow([['🐄','Total milk available entered','Daily morning'],['⚙️','System splits: B2B fixed + B2C remainder','Rule engine'],['📦','B2B dispatch to co-op','Tanker'],['🚴','B2C deliveries via route','Milkman/agent'],['⚠️','Alert if total demand > supply','Real-time'],['💰','Two separate billing tracks','Automated'],['📑','Consolidated P&L','EOD report']])
+    + ucFeatureGrid([
+        ['Inventory Split Engine', ['Set B2B % vs B2C % allocation','Dynamic adjustment based on availability','Shortfall prediction (7-day)','Co-op gets priority (contractual)','Overshoot alert before dispatch']],
+        ['Dual Billing System', ['B2B: GST invoice to co-op (monthly)','B2C: Customer bill (monthly)','Separate ledgers, same dashboard','Pricing differs: B2B wholesale, B2C retail','Auto-reconcile at month end']],
+        ['B2C Retail Features', ['All UC1 home delivery features','Subscription management','Skip / modify delivery','Wallet top-up & UPI payment','Monthly statement PDF']],
+        ['Analytics & Forecasting', ['B2B vs B2C revenue comparison','7-day demand forecasting by channel','Production adequacy alerts','Seasonal demand trend','Margin comparison B2B vs B2C']],
+      ])
+    + ucApiTable([['POST','/api/v1/inventory/split-plan','Set daily B2B vs B2C split','Seller JWT'],['GET','/api/v1/inventory/adequacy-check','Check if supply meets demand','Seller JWT'],['GET','/api/v1/analytics/channel-revenue','B2B vs B2C revenue breakdown','Seller JWT']])
+    + ucSchemaBlock([['inventory_plan',['id UUID PK','seller_id UUID FK','date DATE','total_litres DECIMAL','b2b_allocated DECIMAL','b2c_allocated DECIMAL','b2b_dispatched DECIMAL','b2c_dispatched DECIMAL']],['channel_ledger',['id UUID PK','seller_id UUID FK','channel ENUM(b2b,b2c)','period_month VARCHAR','revenue DECIMAL','units_litre DECIMAL']]]);
+};
+
+// ─── UC5 · Co-op → Milkmen → Retail ──────────────────────
+PAGES['biz-uc5'] = function() {
+  return ucHeader(5,'🏭','Cooperative Dairy → Individual Milkmen → Retail','Large co-op sells in bulk to independent milkmen who then distribute to homes, hotels, tea shops', ['3-Tier Supply Chain','Wholesale','Franchise-like'])
+    + ucKpiCards([['🏭','Co-op Capacity','10,000L+/day','var(--teal)','Production scale'],['🧑‍🌾','Milkmen Partners','50–500','var(--blue)','Franchise network'],['📦','Avg Takeoff/Milkman','100–500L','var(--amber)','Daily'],['💳','Settlement','Advance deposit model','var(--green)','Pre-paid']])
+    + ucFlowRow([['🏭','Co-op processes & pasteurises milk'],['📋','Milkmen place daily indent (advance)'],['🚚','Co-op dispatches to milkman pickup point'],['🧑‍🌾','Milkmen collect & distribute retail'],['✅','Milkman marks deliveries done'],['💰','Co-op deducts from milkman deposit'],['📊','Co-op sees aggregate distribution']])
+    + ucFeatureGrid([
+        ['Co-op Partner Portal', ['Milkman registration & KYC','Set wholesale rate per milkman','Indent submission deadline (e.g. 9 PM prev)','Dispatch planning & batch management','Partner performance scorecard']],
+        ['Milkman Franchise Features', ['Daily indent submission (fixed window)','Advance deposit wallet (prepaid model)','Pickup confirmation via QR code','Own customer delivery management','Independent billing for end customers']],
+        ['Supply Chain Tracking', ['Co-op → Pickup point (tanker GPS)','Pickup confirmation (milkman app)','Retail delivery tracking','Exception log (rejection at pickup)','End-to-end traceability per batch']],
+        ['Finance Model', ['Milkman maintains prepaid deposit','Co-op deducts per kg at collection','Milkman earns retail margin','Monthly statement for milkman','GST pass-through invoicing']],
+      ])
+    + ucApiTable([['POST','/api/v1/indent/submit','Milkman submits daily indent','Milkman JWT'],['GET','/api/v1/coop/dispatch-plan','Co-op views aggregate indent','Coop JWT'],['POST','/api/v1/pickup/confirm','Milkman confirms pickup via QR','Milkman JWT'],['GET','/api/v1/milkman/{id}/deposit-balance','Check prepaid deposit balance','Milkman JWT']])
+    + ucSchemaBlock([['coop_milkman_partner',['id UUID PK','coop_id UUID FK','milkman_id UUID FK','wholesale_rate DECIMAL','deposit_balance DECIMAL','indent_deadline TIME','active BOOLEAN']],['daily_indent',['id UUID PK','milkman_id UUID FK','coop_id UUID FK','date DATE','qty_requested DECIMAL','qty_approved DECIMAL','qty_dispatched DECIMAL','pickup_confirmed BOOLEAN']]]);
+};
+
+// ─── UC6 · Co-op → Brands ─────────────────────────────────
+PAGES['biz-uc6'] = function() {
+  return ucHeader(6,'🏷️','Cooperative Dairies → Brands (Amul, Katraj, Country Delight…)','Large co-ops supply raw/processed milk to national/regional dairy brands at enterprise scale', ['Enterprise B2B','Brand Supply','Commodity'])
+    + ucKpiCards([['📦','Volume','10,000–1,00,000L/day','var(--teal)','Brand scale'],['🧾','Contract','Annual SLA-based','var(--blue)','Fixed rate'],['🌡️','Cold Chain','2–4°C maintained','var(--amber)','IoT monitored'],['🔬','Quality','FSSAI A-grade','var(--green)','Every batch']])
+    + ucFlowRow([['🏭','Co-op produces & tests quality'],['📜','Contract price locked (govt advisory)'],['🚚','Tanker dispatched with seal & GPS'],['🏢','Brand plant receives & tests'],['✅','Acceptance note raised','SAP/ERP'],['🧾','Invoice + E-way bill generated'],['💳','Payment in 30/45/60 days']])
+    + ucFeatureGrid([
+        ['Brand Account Management', ['Brand registration with GST + FSSAI','Multi-location delivery destinations','Volume commitment tracking vs actual','Rate revision workflow (negotiation trail)','SLA breach alert & penalty calculation']],
+        ['Quality & Compliance', ['Batch-level certificate of analysis','FSSAI license verification','E-way bill auto-generation (GST portal API)','Cold chain temperature log (IoT)','Third-party lab report upload']],
+        ['Dispatch & Logistics', ['Tanker GPS tracking (live)','Seal integrity check at destination','Weighbridge slip integration','Rejection workflow (full/partial)','Re-dispatch scheduling']],
+        ['Finance & Contracts', ['Annual rate contracts stored','Price escalation formula (govt linked)','Credit period: 30/45/60 days','Advance payment option (with rebate)','TDS/TCS handling automation']],
+      ])
+    + ucApiTable([['POST','/api/v1/brand-contracts','Create brand supply contract','Admin JWT'],['POST','/api/v1/tanker-dispatch','Initiate brand dispatch with GPS','Coop JWT'],['PUT','/api/v1/dispatch/{id}/acknowledge','Brand accepts delivery','Brand JWT'],['GET','/api/v1/quality/batch/{batchId}/cert','Get quality certificate PDF','Any JWT'],['POST','/api/v1/ewaybill/generate','Generate E-way bill via GST API','Coop JWT']])
+    + ucSchemaBlock([['brand_account',['id UUID PK','brand_name VARCHAR','gstin VARCHAR','fssai_no VARCHAR','hq_city VARCHAR','contract_id UUID FK','credit_days INT']],['brand_contract',['id UUID PK','coop_id UUID FK','brand_id UUID FK','rate_per_litre DECIMAL','min_daily_qty DECIMAL','start_date DATE','end_date DATE','penalty_per_miss DECIMAL']],['tanker_dispatch',['id UUID PK','coop_id UUID FK','brand_id UUID FK','tanker_no VARCHAR','seal_no VARCHAR','qty_litres DECIMAL','dispatch_time TIMESTAMP','destination VARCHAR','status ENUM']]]);
+};
+
+// ─── UC7 · Collection Centres ─────────────────────────────
+PAGES['biz-uc7'] = function() {
+  return ucHeader(7,'📍','Milkmen → Collection Centres','Milkmen pour milk at designated collection centres (village/town level); co-ops collect from these points', ['Village Level','Aggregation','FAT Testing'])
+    + ucKpiCards([['🏘️','Collection Points','1 per 5–10 villages','var(--teal)','Rural scale'],['⏰','Collection Time','5–9 AM morning shift','var(--blue)','Strict window'],['🔬','Testing','FAT+SNF at point','var(--amber)','On-site machine'],['💰','Payment','Daily/Weekly transfer','var(--green)','Per kg fat']])
+    + ucFlowRow([['🧑‍🌾','Milkman arrives at collection point'],['⚖️','Milk weighed on digital scale'],['🔬','FAT % tested on Milko-Tester'],['✅','Accepted quantity logged'],['📱','Milkman gets SMS receipt'],['🏭','Tanker picks up aggregate'],['💳','Payment released per fat kg']])
+    + ucFeatureGrid([
+        ['Collection Centre Setup', ['Register centre with GPS location','Assign operator (govt/coop staff)','Define acceptance window (time)','Link to parent co-op entity','Capacity limit per session']],
+        ['Farmer/Milkman Onboarding', ['Member ID card (QR code)','Linked bank account for NEFT','Morning & evening session','Cattle count declared','Organic certification optional']],
+        ['FAT Testing Integration', ['Milko-Tester device API integration','Reading synced to platform instantly','Rejection criteria (< 3% fat)','Dispute resolution workflow','Historical fat trend per farmer']],
+        ['Payment Automation', ['Rate = fat% × price per SNF kg','Daily auto-calculation','Weekly NEFT to farmer account','Advance loan deduction','Yearly income certificate PDF']],
+      ])
+    + ucApiTable([['POST','/api/v1/collection-centres','Register new collection centre','Admin JWT'],['POST','/api/v1/pour-records','Record morning/evening pour','Centre JWT'],['POST','/api/v1/fat-readings','Submit Milko-Tester reading','Device API'],['GET','/api/v1/farmer/{id}/payout-summary','Farmer monthly earnings summary','Farmer JWT']])
+    + ucSchemaBlock([['collection_centre',['id UUID PK','coop_id UUID FK','name VARCHAR','village VARCHAR','lat DECIMAL','lng DECIMAL','operator_id UUID FK','morning_close TIME','evening_close TIME']],['pour_record',['id UUID PK','centre_id UUID FK','farmer_id UUID FK','session ENUM(morning,evening)','date DATE','qty_litres DECIMAL','fat_pct DECIMAL','snf_pct DECIMAL','rate_per_litre DECIMAL','amount DECIMAL','status ENUM']]]);
+};
+
+// ─── UC8 · On-Demand ──────────────────────────────────────
+PAGES['biz-uc8'] = function() {
+  return ucHeader(8,'⚡','On-Demand Milk Delivery','Customer orders milk any time from nearest local milkman or brand (Country Delight / Amul etc.) — delivered within SLA window', ['On-Demand','Hyperlocal','Brand+Local'])
+    + ucKpiCards([['⏱️','Delivery SLA','30–90 min','var(--teal)','Hyperlocal'],['📍','Radius','3 km default','var(--blue)','Configurable'],['🔄','Order Types','One-time / Schedule','var(--amber)','Flexible'],['🤝','Fulfillment','Local milkman OR Brand','var(--green)','Best match']])
+    + ucFlowRow([['📱','Customer places on-demand order'],['🔍','Platform finds nearest available seller'],['📣','Seller/brand gets push notification'],['✅','Seller accepts within 2 min'],['🚴','Delivery agent dispatched','GPS'],['📦','Delivered + OTP confirm'],['⭐','Customer rates delivery']])
+    + ucFeatureGrid([
+        ['Smart Fulfillment Engine', ['Rank sellers by: distance + availability + rating','Brand slots (Country Delight, Amul) always listed','Fallback: next nearest if declined','Max 2 min acceptance window','Auto-cancel & re-route if no accept']],
+        ['Order Configuration', ['Product: cow, buffalo, A2, toned, flavoured','Quantity: 250ml to 5L','Delivery instructions (gate code, flat)','Leave at door option','Preferred brand filter']],
+        ['Pricing & Surge', ['Base rate + on-demand premium (10–20%)','Brand vs local price transparency','Surge pricing during peak demand','Coupon / wallet discount at checkout','Price comparison before placing order']],
+        ['Tracking & Rating', ['Real-time agent GPS on map','Estimated arrival time (live)','Push + SMS delivery confirmation','OTP on delivery (tamper-proof)','1–5 star rating + review for seller']],
+      ])
+    + ucApiTable([['POST','/api/v1/on-demand/order','Place on-demand order','Customer JWT'],['GET','/api/v1/on-demand/nearby-sellers','List nearest available sellers','Customer JWT'],['PUT','/api/v1/on-demand/order/{id}/accept','Seller accepts order','Seller JWT'],['GET','/api/v1/on-demand/order/{id}/track','Live delivery tracking','Customer JWT'],['POST','/api/v1/on-demand/order/{id}/rate','Rate completed delivery','Customer JWT']])
+    + ucSchemaBlock([['on_demand_order',['id UUID PK','customer_id UUID FK','seller_id UUID FK','product_id UUID FK','qty DECIMAL','status ENUM','placed_at TIMESTAMP','accepted_at TIMESTAMP','delivered_at TIMESTAMP','surge_multiplier DECIMAL']],['fulfillment_match',['id UUID PK','order_id UUID FK','seller_id UUID FK','distance_km DECIMAL','offered_at TIMESTAMP','response ENUM(accepted,declined,timeout)','response_at TIMESTAMP']]]);
+};
+
+// ─── UC9 · 10-Min Milk ────────────────────────────────────
+PAGES['biz-uc9'] = function() {
+  return ucHeader(9,'🚀','Instant 10-Minute Milk Delivery','Like Zepto/Blinkit for milk — hyperlocal dark store model ensuring delivery within 10 minutes', ['Quick Commerce','Dark Store','Real-time Inventory'])
+    + ucKpiCards([['⚡','Target SLA','10 minutes','var(--red)','Hard target'],['🏪','Model','Dark store / micro-warehouse','var(--teal)','1 per 2km radius'],['📦','SKUs','6–12 milk SKUs','var(--blue)','Pre-packed'],['🛵','Fleet','Dedicated e-bikes','var(--amber)','Always ready']])
+    + ucFlowRow([['📱','Customer orders on app','1 click'],['🏪','Nearest dark store picks order','30 sec'],['📦','Pack & hand to rider','2 min'],['🛵','Rider dispatched with GPS','3 min'],['🏃','En route tracking live','4–9 min'],['📦','Delivered + OTP','10 min'],['⭐','Rate & re-order suggestion','Post-delivery']])
+    + ucFeatureGrid([
+        ['Dark Store Operations', ['Pre-packed milk pouches/bottles','Inventory replenished 2x daily','Temperature-controlled storage (4°C)','Live inventory count per SKU','Auto-reorder when stock < threshold']],
+        ['Fleet Management', ['Dedicated rider pool (no shared with subscriptions)','Real-time rider availability','Rider app: accept → pick → deliver','Geofenced radius enforcement','SLA breach alert (8 min → escalate)']],
+        ['Customer Experience', ['1-tap reorder (saved preference)','Live 10-min countdown on map','No minimum order value','First order free (promo)','Loyalty: 10th order 20% off']],
+        ['Operations Dashboard', ['Live order board (Kanban: placed → picked → delivered)','Per-store SLA hit rate','Inventory runout prediction','Peak hour demand heatmap','Rider performance per hour']],
+      ])
+    + ucApiTable([['POST','/api/v1/quick-commerce/order','Place instant order','Customer JWT'],['GET','/api/v1/dark-stores/nearest','Find nearest dark store','Customer JWT'],['POST','/api/v1/dark-stores/{id}/inventory/update','Update live stock count','Store App JWT'],['GET','/api/v1/quick-commerce/order/{id}/eta','Live ETA update','Customer JWT'],['POST','/api/v1/quick-commerce/order/{id}/otp-confirm','Confirm delivery with OTP','Rider JWT']])
+    + ucSchemaBlock([['dark_store',['id UUID PK','name VARCHAR','lat DECIMAL','lng DECIMAL','radius_km DECIMAL','capacity_litres DECIMAL','open_from TIME','open_to TIME','active BOOLEAN']],['dark_store_inventory',['id UUID PK','store_id UUID FK','product_id UUID FK','qty_available INT','reorder_threshold INT','last_restocked TIMESTAMP']],['quick_order',['id UUID PK','customer_id UUID FK','store_id UUID FK','rider_id UUID FK','placed_at TIMESTAMP','dispatched_at TIMESTAMP','delivered_at TIMESTAMP','sla_seconds INT','breach BOOLEAN']]]);
+};
+
+// ─── UC10 · 10-Min Tea ────────────────────────────────────
+PAGES['biz-uc10'] = function() {
+  return ucHeader(10,'☕','10-Minute Tea Delivery from Nearest Tea Shop','On-demand piping hot tea delivered within 10 minutes from your nearest registered tea stall / chai shop', ['Quick Commerce','F&B','Hyper-Local'])
+    + ucKpiCards([['☕','Product','Hot tea (all types)','var(--amber)','Cutting to Masala'],['⏱️','SLA','10 min (prep+deliver)','var(--red)','Heat-safe packaging'],['🏪','Partners','Registered chai shops','var(--teal)','Verified kitchens'],['📦','Min Order','₹20 (1 cutting)','var(--green)','No delivery fee <500m']])
+    + ucFlowRow([['📱','Customer selects tea type + qty'],['☕','Nearest chai shop gets order','Push notif'],['🫖','Tea prepared fresh','2–3 min'],['📦','Packed in heat-safe container'],['🛵','Rider picks up & delivers','5–7 min'],['📦','Hot tea delivered','≤10 min'],['⭐','Rate + tip option']])
+    + ucFeatureGrid([
+        ['Tea Catalog', ['Cutting chai (₹20–25)','Masala chai (₹25–30)','Ginger / Elaichi / Tulsi variants','Iced tea (seasonal)','Custom milk ratio (less sweet, etc.)']],
+        ['Chai Shop Partner Onboarding', ['FSSAI registration required','Kitchen photo verification','Operating hours configuration','Menu & pricing setup','Response time SLA agreement (< 1 min accept)']],
+        ['Packaging & Quality', ['Heat-retaining cups (40 min)','Sealed lid for tamper-proof','Customer can request extras (sugar, ginger)','Temperature guarantee (or refund)','Hygienic preparation photo on request']],
+        ['Business Model', ['Platform commission: 12–15%','Surge pricing: 8–10 AM / 4–6 PM','Chai shop receives net payout daily','Subscription: office chai plan (Mon–Fri)','Corporate bulk order: 50+ cups/day']],
+      ])
+    + ucApiTable([['POST','/api/v1/tea/order','Place tea order','Customer JWT'],['GET','/api/v1/tea-shops/nearby?lat={}&lng={}','Nearest chai partners','Customer JWT'],['POST','/api/v1/tea/order/{id}/accept','Chai shop accepts','Partner JWT'],['PUT','/api/v1/tea/order/{id}/ready','Mark tea ready for pickup','Partner JWT']])
+    + ucSchemaBlock([['tea_shop_partner',['id UUID PK','shop_name VARCHAR','fssai_no VARCHAR','lat DECIMAL','lng DECIMAL','radius_km DECIMAL','operating_hours JSON','avg_prep_minutes INT','commission_pct DECIMAL']],['tea_order',['id UUID PK','customer_id UUID FK','shop_id UUID FK','items JSON','total_amount DECIMAL','prep_started_at TIMESTAMP','picked_up_at TIMESTAMP','delivered_at TIMESTAMP','sla_breach BOOLEAN']]]);
+};
+
+// ─── UC11 · Tea + Breakfast ────────────────────────────────
+PAGES['biz-uc11'] = function() {
+  return ucHeader(11,'🍳','Tea + Breakfast Delivery','Bundled morning combo — hot tea + breakfast items (poha, samosa, bread) delivered together within 10 minutes or on schedule', ['F&B Bundle','Morning Combo','Subscription'])
+    + ucKpiCards([['🍳','Combo Types','Tea + 8 breakfast items','var(--amber)','Expandable menu'],['📅','Models','Instant + Scheduled both','var(--teal)','Mon–Fri plan'],['💰','Avg Order','₹60–150','var(--green)','Bundle discount'],['🏪','Partners','Chai shop + tiffin centre','var(--blue)','Co-fulfillment']])
+    + ucFlowRow([['📱','Customer picks combo / subscription'],['🤝','Split order: chai shop + tiffin centre'],['🍳','Both prepare simultaneously'],['📦','Aggregated by rider at pickup'],['🛵','Single delivery to customer','Warm box'],['⭐','Rate both partners separately'],['🔄','Reorder / modify next day']])
+    + ucFeatureGrid([
+        ['Breakfast Menu', ['Poha / Upma / Sheera (₹30–40)','Bread butter / jam / omelette','Samosa / Kachori / Vada','Healthy: sprouts, fruit bowl, muesli','Regional specials (rotated weekly)']],
+        ['Subscription Plans', ['Mon–Fri Office Plan: tea+breakfast daily','Weekend Brunch: Sat–Sun only','Custom: choose days + items','Auto-charge monthly','Pause for holidays/travel']],
+        ['Co-Fulfillment Engine', ['Order split to chai partner + food partner','Synchronized preparation start time','Rider picks both when ready','If one delayed: partial delivery + ETA update','Customer notified in real time']],
+        ['Business Expansion', ['Corporate tie-ups: 50–500 employees','Canteen replacement model','School / hospital morning meal plan','Commission: 12% chai + 15% food','Rated by item, not just order']],
+      ])
+    + ucApiTable([['POST','/api/v1/breakfast-bundle/order','Place combo order','Customer JWT'],['GET','/api/v1/breakfast-bundle/menu','Today\'s breakfast catalog','Public'],['POST','/api/v1/breakfast-bundle/subscription','Create morning subscription plan','Customer JWT']])
+    + ucSchemaBlock([['breakfast_menu_item',['id UUID PK','partner_id UUID FK','name VARCHAR','category ENUM','price DECIMAL','prep_min INT','available_from TIME','available_to TIME']],['bundle_order',['id UUID PK','customer_id UUID FK','tea_order_id UUID FK','food_order_id UUID FK','status ENUM','scheduled_time TIMESTAMP','combo_discount_pct DECIMAL']]]);
+};
+
+// ─── UC12 · Bulk + Extra on Demand ────────────────────────
+PAGES['biz-uc12'] = function() {
+  return ucHeader(12,'📦','Bulk + Extra Milk on Demand with Schedule','Regular subscribers can request extra milk on specific days or place one-time bulk orders alongside their subscription', ['Add-On Orders','Flexible','Hotels & Events'])
+    + ucKpiCards([['➕','Extra Request','Same-day before 10 PM','var(--teal)','Next morning delivery'],['📦','Bulk Min','5L minimum extra','var(--blue)','Events/parties'],['💰','Pricing','Subscription rate (no premium)','var(--green)','Loyalty benefit'],['📅','Advance','Up to 7 days in advance','var(--amber)','Pre-plan']])
+    + ucFlowRow([['📱','Customer requests extra / bulk','App / WhatsApp'],['✅','System checks seller capacity','Real-time'],['📋','Added to next day\'s delivery list','Auto'],['🚴','Delivered along with subscription','Same trip'],['🧾','Extra charged to monthly bill','Auto'],['📊','Seller sees capacity impact','Dashboard']])
+    + ucFeatureGrid([
+        ['Extra Milk Request', ['Same-day request before 10 PM cutoff','Quantity: 0.5L to 20L extra','Auto-check seller has capacity','Added to existing delivery stop (no extra trip)','Notify agent for route update']],
+        ['Bulk Event Orders', ['Minimum 5L, up to 500L','2 days advance notice required','Separate delivery slot (not with subscription)','Invoice raised immediately','Payment: advance 50% or wallet']],
+        ['Seller Capacity System', ['Real-time capacity tracker per day','Auto-reject if oversold','Waitlist for oversold days','Restock notification to seller','Seasonal capacity planning tool']],
+        ['Use Cases in Practice', ['Festival: Holi/Diwali extra milk','Party/function at home','Hotel for extra guests','Tea stall busy day buffer','Gym smoothie bar weekly top-up']],
+      ])
+    + ucApiTable([['POST','/api/v1/extra-orders','Place extra/bulk order','Customer JWT'],['GET','/api/v1/sellers/{id}/capacity/{date}','Check available capacity','Customer JWT'],['PUT','/api/v1/extra-orders/{id}/cancel','Cancel extra order (before cutoff)','Customer JWT']])
+    + ucSchemaBlock([['extra_order',['id UUID PK','subscription_id UUID FK','customer_id UUID FK','seller_id UUID FK','date DATE','qty_extra DECIMAL','type ENUM(extra,bulk)','status ENUM','charge DECIMAL','requested_at TIMESTAMP']],['seller_capacity',['id UUID PK','seller_id UUID FK','date DATE','total_capacity DECIMAL','subscribed_qty DECIMAL','extra_allocated DECIMAL','available DECIMAL']]]);
+};
+
+// ─── UC13 · Social / Wastage Milk ─────────────────────────
+PAGES['biz-uc13'] = function() {
+  return ucHeader(13,'💚','Social Milk — Wastage Notification & Donation','Customers or delivery agents report excess/unsold milk; platform connects to NGOs, orphanages, temples for same-day distribution', ['CSR','Social Impact','Zero Waste'])
+    + ucKpiCards([['🥛','Avg Wastage Prevented','180L/day','var(--teal)','Platform-wide'],['🤝','NGO Partners','42 registered','var(--green)','Verified orgs'],['⏱️','Alert to Collection','< 30 min','var(--amber)','Same morning'],['🏅','Impact Score','Seller CSR rating','var(--blue)','Public profile']])
+    + ucFlowRow([['📢','Milkman / customer reports excess milk'],['📍','Platform alerts nearest NGO partners','GPS radius'],['✅','NGO confirms they can collect'],['🚴','Collection arranged (milkman delivers free)'],['📸','Photo proof uploaded','Transparency'],['📊','CSR impact logged on seller profile'],['🏅','Seller earns CSR badge']])
+    + ucFeatureGrid([
+        ['Reporting Flow (Milkman)', ['End-of-day unsold milk quantity input','Reason: returned, expired risk, overproduced','Platform matches to nearest NGO/temple','Milkman redirects remaining route','Proof photo required for CSR credit']],
+        ['NGO / Temple Partner Portal', ['Register organisation + area served','Declare daily capacity (beneficiaries)','Receive alerts with quantity + location','Accept or decline (with reason)','Monthly impact report PDF']],
+        ['Gamification & Incentives', ['Seller earns "Green Star" CSR badge','Badge shown on marketplace profile','Buyer can see seller CSR score','Top CSR sellers featured on home screen','Annual award: "Zero Waste Dairy"']],
+        ['Platform Impact Dashboard', ['Total litres saved (all time)','Beneficiaries served','Active NGO partners','Monthly CSR trend chart','Share to social media feature']],
+      ])
+    + ucApiTable([['POST','/api/v1/social/wastage-report','Report excess milk for donation','Agent/Seller JWT'],['GET','/api/v1/social/ngo-partners/nearby','Find NGOs in radius','Seller JWT'],['PUT','/api/v1/social/wastage/{id}/accept','NGO accepts donation','NGO JWT'],['GET','/api/v1/social/impact-dashboard','Platform CSR stats','Public']])
+    + ucSchemaBlock([['ngo_partner',['id UUID PK','name VARCHAR','type ENUM(orphanage,temple,oldagehome,school)','lat DECIMAL','lng DECIMAL','contact_name VARCHAR','daily_capacity_litres DECIMAL','verified BOOLEAN']],['wastage_report',['id UUID PK','seller_id UUID FK','agent_id UUID FK','date DATE','qty_litres DECIMAL','ngo_id UUID FK','status ENUM','proof_photo_url VARCHAR','csr_points INT']]]);
+};
+
+// ─── UC14 · IoT Milk Purity ───────────────────────────────
+PAGES['biz-uc14'] = function() {
+  return ucHeader(14,'📡','IoT-Based Milk Purity & Taste Monitoring','Smart sensors at farms, collection points, and dark stores monitor fat%, SNF, temperature, adulteration in real time', ['IoT','Food Safety','Real-time Alerts'])
+    + ucKpiCards([['📡','Sensors Deployed','1 per collection point','var(--teal)','Edge devices'],['⏱️','Reading Frequency','Every 30 min','var(--blue)','Automated'],['🚨','Adulteration Alert','< 2 min response','var(--red)','Critical alert'],['🔬','Parameters','FAT, SNF, Temp, pH, Water %','var(--amber)','Multi-param']])
+    + ucFlowRow([['📡','IoT sensor takes reading','Every 30 min'],['📶','Data sent via MQTT to cloud','Edge → AWS IoT'],['⚙️','Rules engine evaluates thresholds'],['🚨','Alert if any parameter out of range'],['📱','Seller + Admin notified instantly'],['🔒','Batch quarantined if critical'],['📊','Logged to audit trail']])
+    + ucFeatureGrid([
+        ['Sensor Parameters Monitored', ['Fat % (minimum 3.0% cow, 5.0% buffalo)','SNF % (minimum 8.5%)','Temperature (must be < 4°C in storage)','pH level (6.6–6.8 normal range)','Water adulteration % (< 1% acceptable)','Starch/neutraliser detection (zero tolerance)']],
+        ['Alert Tiers', ['🟡 Warning: parameter near threshold — notify seller','🔴 Critical: out of range — quarantine batch auto','🚨 Fraud: adulteration detected — regulatory alert','ℹ️ Info: routine reading logged','All alerts with timestamp, location, reading value']],
+        ['Device Integration', ['Milko-Tester: FAT/SNF (existing device API)','Temperature probe: MQTT over LoRaWAN','Smart tank sensors: WiFi/NB-IoT','Mobile FAT tester (Bluetooth app-linked)','AWS IoT Core for device management']],
+        ['Data & Compliance', ['Every reading immutably logged (append-only)','FSSAI compliance report auto-generated','Customer-facing purity score on each order','Blockchain hash for premium batches','Historical trend: seller quality score over time']],
+      ])
+    + ucApiTable([['POST','/api/v1/iot/readings','Ingest IoT sensor reading (MQTT bridge)','Device API Key'],['GET','/api/v1/iot/devices/{id}/latest','Latest reading for a sensor','Seller JWT'],['GET','/api/v1/iot/alerts?sellerId={id}','Active quality alerts','Seller JWT'],['POST','/api/v1/iot/batch/{id}/quarantine','Quarantine a batch manually','Admin JWT']])
+    + ucSchemaBlock([['iot_device',['id UUID PK','seller_id UUID FK','location_id UUID FK','device_type ENUM','serial_no VARCHAR','last_ping TIMESTAMP','firmware_version VARCHAR']],['iot_reading',['id UUID PK','device_id UUID FK','timestamp TIMESTAMP','fat_pct DECIMAL','snf_pct DECIMAL','temp_celsius DECIMAL','ph DECIMAL','water_pct DECIMAL','adulteration_flag BOOLEAN','alert_level ENUM(ok,warn,critical)']],['iot_alert',['id UUID PK','reading_id UUID FK','seller_id UUID FK','parameter VARCHAR','value DECIMAL','threshold DECIMAL','resolved_at TIMESTAMP','batch_quarantined BOOLEAN']]]);
+};
+
+// ─── UC15 · Cattle Management ─────────────────────────────
+PAGES['biz-uc15'] = function() {
+  return ucHeader(15,'🐄','Cattle Management for Farmers & Dairies','Full cattle lifecycle management — individual animal records, health tracking, feed management, vet consultations, and milk productivity', ['AgriTech','Livestock','E-Vet'])
+    + ucKpiCards([['🐄','Animals Tracked','Per farmer/dairy','var(--teal)','Any scale'],['💉','Health Events','Vaccination / illness / calving','var(--amber)','Full history'],['🥛','Productivity','Litres/day per animal','var(--blue)','AI insight'],['👨‍⚕️','E-Vet','Video consultation','var(--green)','On-demand']])
+    + ucFlowRow([['🐄','Animal registered with tag/ID'],['🥛','Daily milk yield entered'],['🌾','Feed plan configured'],['💉','Vaccination schedule set (auto-remind)'],['🤒','Health event recorded (illness/calving)'],['👨‍⚕️','E-vet consulted if needed'],['📊','Productivity report generated']])
+    + ucFeatureGrid([
+        ['Animal Registry', ['Each animal: tag no, breed, DOB, source','Photo + physical description','Ownership documents upload','Cattle insurance linked','Ear tag / RFID integration support']],
+        ['Health Management', ['Vaccination schedule & auto-reminders','Illness log with symptoms + treatment','Calving record + calf registration','Deworming schedule','Vet prescription store (PDF)','AI health anomaly detection (based on yield drop)']],
+        ['Feed & Nutrition', ['Daily feed plan per animal (breed-specific)','Feed cost calculator','Fodder procurement tracking','Seasonal feed adjustment suggestions','Water intake monitoring (IoT optional)']],
+        ['E-Veterinary Clinic', ['Video call with registered vets (₹50–200)','Prescription digital download','Govt vet integration (free consultations)','Emergency SOS vet dispatch','Medicines: order + doorstep delivery']],
+      ])
+    + ucApiTable([['POST','/api/v1/cattle','Register new animal','Farmer JWT'],['POST','/api/v1/cattle/{id}/health-events','Log health event','Farmer JWT'],['POST','/api/v1/cattle/{id}/yield-entry','Daily yield entry','Farmer JWT'],['POST','/api/v1/evet/book-consultation','Book video vet consult','Farmer JWT'],['GET','/api/v1/cattle/{id}/productivity-report','Animal productivity PDF','Farmer JWT']])
+    + ucSchemaBlock([['cattle',['id UUID PK','owner_id UUID FK','tag_no VARCHAR','breed VARCHAR','gender ENUM','dob DATE','source_type ENUM','insured BOOLEAN','active BOOLEAN']],['cattle_health_event',['id UUID PK','cattle_id UUID FK','event_type ENUM(vaccination,illness,calving,deworming)','date DATE','description TEXT','vet_id UUID FK','prescription_url VARCHAR']],['cattle_yield',['id UUID PK','cattle_id UUID FK','date DATE','session ENUM(morning,evening)','qty_litres DECIMAL','fat_pct DECIMAL']],['evet_consultation',['id UUID PK','cattle_id UUID FK','farmer_id UUID FK','vet_id UUID FK','scheduled_at TIMESTAMP','fee DECIMAL','prescription_url VARCHAR','status ENUM']]]);
+};
+
+// ─── UC16 · Rent-a-Cow ────────────────────────────────────
+PAGES['biz-uc16'] = function() {
+  return ucHeader(16,'🐮','Rent-a-Cow / Own-a-Cow (Gir Cow)','City customers can rent or co-own a Gir cow at a dairy farm — receive daily fresh milk deliveries + farm hobby experience', ['Agri-Tourism','Unique','Premium'])
+    + ucKpiCards([['🐮','Cow Breeds','Gir, Sahiwal, Tharparkar','var(--amber)','Desi A2 breeds'],['💰','Rent','₹3,000–8,000/month','var(--teal)','Breed-based'],['🥛','Daily Yield','3–8L sent to customer','var(--green)','Named cow'],['📱','Updates','Daily photo + video','var(--blue)','WhatsApp/app']])
+    + ucFlowRow([['📱','Customer browses available cows'],['🐮','Selects breed, duration, farm'],['💳','Pays rent (monthly)'],['🥛','Daily A2 milk delivered to home'],['📸','Daily cow update sent'],['🏡','Farm visit option (UC17 link)'],['🔄','Renew or end subscription']])
+    + ucFeatureGrid([
+        ['Cow Listing & Selection', ['Breed: Gir, Sahiwal, Kankrej, HF mix','Each cow has name, age, photo, yield profile','Current health status (vet certified)','Expected yield per day','Availability calendar']],
+        ['Customer Benefits', ['Named cow assigned exclusively','Daily A2 fresh milk delivery (from that cow)','Daily WhatsApp photo/video update','Health report monthly','Priority farm visit access','Cow stays in your name in registry']],
+        ['Ownership Model (Optional)', ['Full purchase: ₹60,000–2,00,000','Shared ownership: 2–4 families','Platform manages cow, customer gets milk share','Mortality insurance included','Exit: resale via platform marketplace']],
+        ['Farm Partner Requirements', ['Registered dairy farm + FSSAI','Vet on-call weekly','Daily yield recording mandatory','Cow cannot be moved without consent','Customer satisfaction score > 4.0 to list']],
+      ])
+    + ucApiTable([['GET','/api/v1/cows/available','Browse available cows for rent/own','Customer JWT'],['POST','/api/v1/cow-rental','Book cow rental subscription','Customer JWT'],['GET','/api/v1/cow-rental/{id}/daily-update','Get today\'s cow update','Customer JWT'],['POST','/api/v1/cow-rental/{id}/cancel','Cancel rental subscription','Customer JWT']])
+    + ucSchemaBlock([['cow_listing',['id UUID PK','farm_id UUID FK','name VARCHAR','breed VARCHAR','age_months INT','daily_yield_litres DECIMAL','rental_price DECIMAL','ownership_price DECIMAL','status ENUM(available,rented,owned)','health_certified_at DATE']],['cow_rental',['id UUID PK','cow_id UUID FK','customer_id UUID FK','start_date DATE','end_date DATE','monthly_rent DECIMAL','milk_delivery_address TEXT','status ENUM','auto_renew BOOLEAN']]]);
+};
+
+// ─── UC17 · Dairy Farm Visit ──────────────────────────────
+PAGES['biz-uc17'] = function() {
+  return ucHeader(17,'🎫','Dairy Farm Visit — Ticketed Experience','City customers book a guided dairy farm visit — experience milking, feeding, and rural life. Per-person ticketing.', ['Agri-Tourism','Experience','Educational'])
+    + ucKpiCards([['🎫','Ticket Price','₹150–500/person','var(--teal)','Age-based'],['⏰','Duration','2–4 hours','var(--blue)','Half day'],['👨‍👩‍👧','Group Size','4–30 per slot','var(--amber)','Managed tours'],['📍','Distance','Within 50km city','var(--green)','Accessible']])
+    + ucFlowRow([['📱','Customer browses farm experiences'],['📅','Selects date, slot, no. of persons'],['💳','Pays ticket online'],['📲','Gets e-ticket with farm GPS + contact'],['🚗','Visits farm on the day'],['🐄','Guided tour: milking, feeding, hay'],['⭐','Reviews farm on platform']])
+    + ucFeatureGrid([
+        ['Farm Experience Packages', ['Basic (₹150): Self-guided 2hr walk','Standard (₹299): Guided tour + milk tea','Premium (₹499): Tour + milking + paneer making','School Trip (₹99/child): Educational + kit','Corporate Team Building (custom quote)']],
+        ['Booking Flow', ['Date & time slot selection','Per-person ticket (min 2, max 30)','Age group pricing (child/adult/senior)','Group discount for 10+','Cancellation: full refund up to 48hr before']],
+        ['Farm Partner Requirements', ['Registered farm with public liability insurance','Designated visitor area (clean)','Toilets and basic amenities','English/Hindi guided tour option','Emergency contact on site mandatory']],
+        ['Experience Highlights', ['Hand-milking Gir cow demo','Calf feeding experience','Fresh milk straight from cow','Farm-fresh products: ghee, paneer purchase','Nature walk + bird watching optional']],
+      ])
+    + ucApiTable([['GET','/api/v1/farm-visits/farms','List available farms','Public'],['GET','/api/v1/farm-visits/{farmId}/slots','Available date slots','Public'],['POST','/api/v1/farm-visits/book','Book farm visit tickets','Customer JWT'],['GET','/api/v1/farm-visits/booking/{id}/eticket','Download e-ticket PDF','Customer JWT']])
+    + ucSchemaBlock([['farm_experience',['id UUID PK','farm_id UUID FK','package_name VARCHAR','price_adult DECIMAL','price_child DECIMAL','duration_hours INT','min_persons INT','max_persons INT','includes TEXT','active BOOLEAN']],['farm_visit_booking',['id UUID PK','experience_id UUID FK','customer_id UUID FK','visit_date DATE','slot_time TIME','adult_count INT','child_count INT','total_paid DECIMAL','status ENUM','eticket_url VARCHAR']]]);
+};
+
+// ─── UC18 · Gaupuja Booking ───────────────────────────────
+PAGES['biz-uc18'] = function() {
+  return ucHeader(18,'🙏','Gaupuja — 1-Hour Cow Worship Booking','Customers book a sacred Gaupuja session at a registered dairy or Goshala — includes puja, feeding, and priest if needed', ['Cultural','Spiritual','Goshala'])
+    + ucKpiCards([['🙏','Session Duration','1 hour','var(--purple)','Fixed slot'],['💰','Pricing','₹300–1,500','var(--teal)','With/without priest'],['🐄','Cows Available','2–10 per session','var(--amber)','By booking'],['📅','Occasions','Daily / Festival / Special','var(--blue)','Flexible']])
+    + ucFlowRow([['📱','Customer selects Goshala / dairy'],['📅','Picks date, time, occasion type'],['🙏','Chooses puja items (included/custom)'],['💳','Pays online'],['📲','Confirmation + location sent'],['🐄','Performs Gaupuja at dairy'],['📸','Photo memory sent by farm']])
+    + ucFeatureGrid([
+        ['Puja Package Options', ['Basic (₹300): Garland + feed cows + photo','Standard (₹600): + Priest for 30 min puja','Premium (₹1,000): Full puja + prasad + ghee deepa','Festival Special (₹1,500): Gopashtami / Sankranti / Diwali','Corporate CSR (₹5,000): Group + donation to goshala']],
+        ['Occasion Types', ['Regular Monday/auspicious day puja','Birthday / Anniversary special','Shradh / Pitru paksha offering','Festival (Gopashtami, Govardhan puja)','New business / housewarming']],
+        ['Goshala Partner Portal', ['Register Goshala with cow count','Define session capacity & slots','List available puja packages','Priest tie-up (optional)','Manage bookings calendar']],
+        ['Post-Puja Extras', ['Digital blessing certificate PDF','Gau-Ghrita (ghee) bottle purchase','Gauri/Upala set take-home','Donate on behalf of customer','Monthly membership: 4 puja/month']],
+      ])
+    + ucApiTable([['GET','/api/v1/gaupuja/goshalas','List registered goshalas','Public'],['POST','/api/v1/gaupuja/book','Book gaupuja session','Customer JWT'],['GET','/api/v1/gaupuja/booking/{id}/blessing-cert','Get blessing certificate PDF','Customer JWT']])
+    + ucSchemaBlock([['goshala',['id UUID PK','name VARCHAR','address TEXT','lat DECIMAL','lng DECIMAL','cow_count INT','priest_available BOOLEAN','verified BOOLEAN']],['gaupuja_booking',['id UUID PK','goshala_id UUID FK','customer_id UUID FK','date DATE','slot_time TIME','occasion_type VARCHAR','package_id UUID FK','amount DECIMAL','status ENUM','certificate_url VARCHAR']]]);
+};
+
+// ─── UC19 · Gaumutra / Gauri Products ─────────────────────
+PAGES['biz-uc19'] = function() {
+  return ucHeader(19,'🌿','Gaumutra, Gauri (Kanda), Upale — Traditional Products','Platform marketplace for authentic desi cow products: Gaumutra (ark), Gauri/Kanda (dung cakes), Upale for rituals and organic use', ['Marketplace','Traditional','Organic'])
+    + ucKpiCards([['🌿','Products','15+ SKUs listed','var(--green)','All desi cow'],['🐮','Certified','Only A2/desi breed','var(--teal)','Verified farms'],['📦','Delivery','Pan India shipping','var(--blue)','3–7 days'],['💰','Price Range','₹50–2,000','var(--amber)','Affordable to premium']])
+    + ucFlowRow([['🏪','Verified seller lists products'],['📱','Customer browses catalog'],['🛒','Adds to cart + selects qty'],['💳','Pays online'],['📦','Packed + shipped (cold chain for Gaumutra)'],['🚚','Delivered pan-India'],['⭐','Reviews product']])
+    + ucFeatureGrid([
+        ['Gaumutra Products', ['Raw Gaumutra (1L, 5L)','Gaumutra Ark (distilled, 500ml–2L)','Ayurvedic formulations (vendor-listed)','Panchamrit blend (vendor-listed)','Certificate of source-farm required']],
+        ['Gauri / Upale Products', ['Gobar (fresh / dried) — by weight','Dung cakes (Upale) — per piece','Sambhrani/dhoop sticks — pack','Gauri for holi / ritual — sets','Gobar compost for garden — bags']],
+        ['Seller Requirements', ['Only desi / A2 breeds accepted (no HF)','Farm registration + FSSAI','Product photos + lab test report','No chemicals in Gaumutra Ark production','Return policy: quality guarantee 7 days']],
+        ['Customer Use Cases', ['Daily health use: Gaumutra Ark','Holi / Diwali ritual gobar kanda','Garden organic compost','Ayurvedic practitioner bulk supply','Festival season demand (Gopashtami)']],
+      ])
+    + ucApiTable([['GET','/api/v1/traditional-products/catalog','Browse all traditional products','Public'],['POST','/api/v1/traditional-products/order','Place order','Customer JWT'],['POST','/api/v1/traditional-products/seller/list','List new product','Seller JWT']])
+    + ucSchemaBlock([['traditional_product',['id UUID PK','seller_id UUID FK','name VARCHAR','category ENUM(gaumutra,gauri,upale,ark,compost)','breed_source VARCHAR','price DECIMAL','unit VARCHAR','stock_qty INT','lab_report_url VARCHAR','fssai_compliant BOOLEAN']],['traditional_order',['id UUID PK','customer_id UUID FK','items JSON','total_amount DECIMAL','shipping_address TEXT','status ENUM','tracking_no VARCHAR','delivered_at TIMESTAMP']]]);
+};
+
+// ─── UC20 · Wikicow ───────────────────────────────────────
+PAGES['biz-uc20'] = function() {
+  return ucHeader(20,'📚','Wikicow — Centralized Breed Knowledge Base','Wikipedia-style open database of Indian and global cattle breeds — covering genetics, milk composition, temperament, farming suitability', ['Knowledge','Open Data','Community'])
+    + ucKpiCards([['📖','Breeds Listed','48 (Indian + Foreign)','var(--blue)','Growing DB'],['🤝','Contributors','Vets, farmers, researchers','var(--teal)','Community'],['🔍','Searchable','By breed, region, milk type','var(--amber)','Full-text'],['🌐','Languages','Hindi + English (Marathi soon)','var(--green)','Multilingual']])
+    + ucFlowRow([['🔍','User searches breed name / trait'],['📖','Article page with full details'],['📊','Compare 2 breeds side-by-side'],['🤝','Expert submits addition/correction'],['✅','Admin moderates & approves'],['🔗','Linked to marketplace & UC15 cattle registry'],['📤','Exportable PDF / API']])
+    + '<div class="card" style="margin-bottom:16px"><div class="card-header"><div class="card-title">Sample Breed Database</div><button class="btn btn-secondary btn-sm" onclick="toast(\'Opening breed compare tool\')">Compare Breeds</button></div>'
+    + '<div class="table-wrap"><table><thead><tr><th>Breed</th><th>Origin</th><th>Type</th><th>Avg Yield</th><th>Fat %</th><th>Temperament</th><th>Climate</th><th>Best For</th></tr></thead><tbody>'
+    + [['Gir','Gujarat, India','Desi A2','6–12L/day','4.5–5.5%','Gentle','Tropical','Milk + breeding'],['Sahiwal','Punjab/Rajasthan','Desi A2','4–8L/day','4.5–5.0%','Very calm','Hot/dry','Milk + heat tolerance'],['Kankrej','Gujarat','Desi dual','3–5L/day','4.0%','Active','Arid','Draught + milk'],['Tharparkar','Rajasthan','Desi A2','4–6L/day','4.0–5.0%','Calm','Dry/arid','Milk + draught'],['Holstein Friesian','Netherlands','Exotic','20–30L/day','3.2–3.7%','Active','Temperate','High milk volume'],['Jersey','Jersey Island','Exotic','12–20L/day','4.5–5.5%','Docile','Moderate','Rich milk / butter'],['Murrah (Buffalo)','Haryana','Buffalo','10–16L/day','7.0–8.0%','Calm','Sub-tropical','Milk + ghee'],['Jaffarabadi (Buffalo)','Gujarat','Buffalo','6–14L/day','7.5–8.5%','Gentle','Coastal','Heavy milk']].map(function(r){
+        return '<tr><td class="td-bold" style="color:var(--teal)">' + r[0] + '</td><td class="text-muted">' + r[1] + '</td>'
+          + '<td><span class="badge ' + (r[2].includes('Desi')?'badge-green':r[2]==='Exotic'?'badge-blue':'badge-purple') + '">' + r[2] + '</span></td>'
+          + '<td class="td-bold">' + r[3] + '</td><td>' + r[4] + '</td><td class="text-muted">' + r[5] + '</td>'
+          + '<td class="text-muted">' + r[6] + '</td><td class="text-muted" style="font-size:11px">' + r[7] + '</td></tr>';
+      }).join('') + '</tbody></table></div></div>'
+    + ucFeatureGrid([
+        ['Article Structure (Per Breed)', ['Overview: origin, history, official recognition','Physical traits: colour, size, hump characteristics','Milk profile: yield, fat %, SNF%, protein%','Temperament & manageability','Geographic suitability (climate, terrain)','Government schemes for that breed','Where to buy / price range','Video: identification guide']],
+        ['Community Features', ['Verified expert contribution (vet/researcher)','Community Q&A per breed','User-submitted photos (moderated)','Link to Buy/Adopt from platform sellers','Regional variations documented','API for researchers (JSON export)','Citation-ready references (NBAGR, NDDB)','Embed in farmer advisory apps']],
+      ])
+    + ucApiTable([['GET','/api/v1/wikicow/breeds','List all breeds (paginated)','Public'],['GET','/api/v1/wikicow/breeds/{id}','Full breed article','Public'],['GET','/api/v1/wikicow/compare?ids={a},{b}','Side-by-side breed comparison','Public'],['POST','/api/v1/wikicow/contributions','Submit breed addition/edit','Contributor JWT'],['PUT','/api/v1/wikicow/contributions/{id}/approve','Approve contribution','Admin JWT']])
+    + ucSchemaBlock([['breed_article',['id UUID PK','common_name VARCHAR','scientific_name VARCHAR','origin_region VARCHAR','type ENUM(desi_a2,exotic,buffalo,goat)','avg_yield_litres DECIMAL','fat_pct_min DECIMAL','fat_pct_max DECIMAL','climate_suitability VARCHAR','temperament VARCHAR','status ENUM(published,draft,review)']],['breed_contribution',['id UUID PK','breed_id UUID FK','contributor_id UUID FK','section VARCHAR','content TEXT','submitted_at TIMESTAMP','approved_by UUID FK','approved_at TIMESTAMP']]]);
+};
 
 // ════════════════════════════════════════════════════════════
 // HELPERS
